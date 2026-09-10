@@ -152,6 +152,16 @@
       animation: popup 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
     }
 
+    .window.minimized { display: none !important; }
+
+    .window.fullscreen {
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: calc(100vh - 54px) !important;
+      border-radius: 0;
+    }
+
     @keyframes popup {
       from { transform: scale(0.95); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
@@ -282,12 +292,39 @@
       position: relative;
       width: 100%;
       height: 270px;
-      background: linear-gradient(to bottom, #7ac1eb 0%, #bfe3f7 70%, #d5eaf5 100%);
+      background: linear-gradient(to bottom, #71b9e8 0%, #bfe3f7 70%, #d5eaf5 100%);
       border-radius: 8px;
       overflow: hidden;
       border: 2px solid #5a7590;
       outline: none;
       cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .game-container::before,
+    .game-container::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .62);
+      filter: blur(1px);
+      pointer-events: none;
+    }
+
+    .game-container::before {
+      width: 112px;
+      height: 24px;
+      top: 34px;
+      left: 18%;
+      box-shadow: 20px 8px 0 -4px rgba(255,255,255,.62), 230px 28px 0 -2px rgba(255,255,255,.5);
+    }
+
+    .game-container::after {
+      width: 76px;
+      height: 18px;
+      top: 86px;
+      right: 12%;
+      opacity: .7;
     }
 
     .game-ground {
@@ -338,10 +375,40 @@
 
     .game-stats {
       display: flex;
-      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 10px;
       font-weight: 600;
       font-size: 13.5px;
+    }
+
+    .game-stat {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: 6px;
+      background: #eef5fb;
+      border: 1px solid #d8e5ef;
+    }
+
+    .game-stat strong { color: #0067c0; }
+
+    .game-pause {
+      min-width: 36px;
+      height: 32px;
+      border: 1px solid #c7d6e3;
+      border-radius: 6px;
+      background: #fff;
+      color: #31536e;
+      cursor: pointer;
+    }
+
+    .game-pause:hover { background: #e8f3fc; }
+
+    .game-help {
+      margin-top: 9px;
+      color: #5d6b78;
+      font-size: 11px;
+      text-align: center;
     }
 
     .game-overlay {
@@ -372,6 +439,18 @@
 
     .game-btn:hover {
       background: #0067c0;
+    }
+
+    @media (max-width: 700px) {
+      #window-game {
+        width: calc(100vw - 20px);
+        height: 390px;
+        top: 8%;
+        left: 10px;
+      }
+
+      .game-container { height: 245px; }
+      #player-pepito { left: 28px; }
     }
 
     /* --- BARRE DES TÂCHES --- */
@@ -747,8 +826,8 @@
         <i class="fa-solid fa-image" style="color: #0078d4;"></i> Photos — pepito.png
       </div>
       <div class="window-controls">
-        <button class="control-btn">—</button>
-        <button class="control-btn">□</button>
+        <button class="control-btn" onclick="minimizeApp('window-pepito')" aria-label="Réduire" title="Réduire">—</button>
+        <button class="control-btn" onclick="toggleMaximize('window-pepito')" aria-label="Agrandir" title="Agrandir">□</button>
         <button class="control-btn close" onclick="closeApp('window-pepito')">✕</button>
       </div>
     </div>
@@ -767,15 +846,18 @@
         <i class="fa-solid fa-gamepad" style="color: #00d084;"></i> Pepito's Journey — Mini Jeu
       </div>
       <div class="window-controls">
-        <button class="control-btn">—</button>
-        <button class="control-btn">□</button>
+        <button class="control-btn" onclick="minimizeApp('window-game')" aria-label="Réduire" title="Réduire">—</button>
+        <button class="control-btn" onclick="toggleMaximize('window-game')" aria-label="Agrandir" title="Agrandir">□</button>
         <button class="control-btn close" onclick="closeApp('window-game')">✕</button>
       </div>
     </div>
     <div class="window-body">
       <div class="game-stats">
-        <span>Score : <strong id="game-score">0</strong></span>
-        <span>Record : <strong id="game-high">0</strong></span>
+        <span class="game-stat">Score <strong id="game-score">0</strong></span>
+        <span class="game-stat">Record <strong id="game-high">0</strong></span>
+        <button class="game-pause" id="game-pause" type="button" onclick="togglePause(event)" aria-label="Mettre le jeu en pause" title="Pause">
+          <i class="fa-solid fa-pause"></i>
+        </button>
       </div>
 
       <div class="game-container" id="game-box" onclick="jumpPepito()">
@@ -787,9 +869,10 @@
           <h3 style="font-size: 18px;">🎒 En route avec Pépito !</h3>
           <p style="font-size: 12px; margin-top: 4px;">Évite les bugs en sautant par-dessus.</p>
           <button class="game-btn" onclick="startGame(event)">Commencer l'aventure</button>
-          <small style="margin-top: 10px; opacity: 0.85;">(Touche Espace ou Clic pour sauter)</small>
+          <small style="margin-top: 10px; opacity: 0.85;">(Espace, clic ou toucher pour sauter)</small>
         </div>
       </div>
+      <p class="game-help">Évite les bugs et bats ton record. <strong>P</strong> pour mettre en pause.</p>
     </div>
   </div>
 
@@ -800,8 +883,8 @@
         <i class="fa-solid fa-folder-open" style="color: #ffb900;"></i> Projets
       </div>
       <div class="window-controls">
-        <button class="control-btn">—</button>
-        <button class="control-btn">□</button>
+        <button class="control-btn" onclick="minimizeApp('window-projects')" aria-label="Réduire" title="Réduire">—</button>
+        <button class="control-btn" onclick="toggleMaximize('window-projects')" aria-label="Agrandir" title="Agrandir">□</button>
         <button class="control-btn close" onclick="closeApp('window-projects')">✕</button>
       </div>
     </div>
@@ -910,13 +993,43 @@
     // --- GESTION DES FENÊTRES ---
     function openApp(id) {
       const win = document.getElementById(id);
+      win.classList.remove('minimized');
       win.style.display = 'flex';
       bringToFront(win);
       closeStartMenu();
     }
 
+    function minimizeApp(id) {
+      const win = document.getElementById(id);
+      if (id === 'window-game' && isPlaying && !isPaused) togglePause();
+      win.classList.add('minimized');
+    }
+
+    function toggleMaximize(id) {
+      const win = document.getElementById(id);
+      bringToFront(win);
+
+      if (win.classList.contains('fullscreen')) {
+        win.classList.remove('fullscreen');
+        win.style.left = win.dataset.previousLeft || '';
+        win.style.top = win.dataset.previousTop || '';
+        win.style.width = win.dataset.previousWidth || '';
+        win.style.height = win.dataset.previousHeight || '';
+        return;
+      }
+
+      win.dataset.previousLeft = win.style.left;
+      win.dataset.previousTop = win.style.top;
+      win.dataset.previousWidth = win.style.width;
+      win.dataset.previousHeight = win.style.height;
+      win.classList.add('fullscreen');
+    }
+
     function closeApp(id) {
-      document.getElementById(id).style.display = 'none';
+      if (id === 'window-game' && isPlaying && !isPaused) togglePause();
+      const win = document.getElementById(id);
+      win.classList.remove('minimized');
+      win.style.display = 'none';
     }
 
     let topZ = 10;
@@ -1032,12 +1145,14 @@
 
     // --- MOTEUR DU JEU DE PÉPITO ---
     let isPlaying = false;
+    let isPaused = false;
     let isJumping = false;
     let score = 0;
-    let highScore = 0;
+    let highScore = Number(localStorage.getItem('pepitoHighScore')) || 0;
     let obstaclePos = -40;
-    let obstacleSpeed = 4.5;
+    let obstacleSpeed = 270;
     let gameLoopId = null;
+    let lastFrameTime = 0;
 
     const pepito = document.getElementById('player-pepito');
     const obstacle = document.getElementById('game-obstacle');
@@ -1045,21 +1160,45 @@
     const highText = document.getElementById('game-high');
     const startOverlay = document.getElementById('game-start-screen');
     const gameBox = document.getElementById('game-box');
+    const pauseButton = document.getElementById('game-pause');
+
+    highText.innerText = highScore;
 
     function startGame(e) {
       if (e) e.stopPropagation();
+      cancelAnimationFrame(gameLoopId);
       isPlaying = true;
+      isPaused = false;
       score = 0;
-      obstacleSpeed = 5;
+      obstacleSpeed = 270;
       obstaclePos = -40;
+      isJumping = false;
+      pepito.style.bottom = '38px';
       scoreText.innerText = "0";
       startOverlay.style.display = 'none';
+      pauseButton.innerHTML = '<i class="fa-solid fa-pause"></i>';
+      pauseButton.setAttribute('aria-label', 'Mettre le jeu en pause');
       pepito.classList.add('pepito-running');
+      lastFrameTime = performance.now();
       gameLoop();
     }
 
+    function togglePause(e) {
+      if (e) e.stopPropagation();
+      if (!isPlaying) return;
+      isPaused = !isPaused;
+      pauseButton.innerHTML = isPaused
+        ? '<i class="fa-solid fa-play"></i>'
+        : '<i class="fa-solid fa-pause"></i>';
+      pauseButton.setAttribute('aria-label', isPaused ? 'Reprendre le jeu' : 'Mettre le jeu en pause');
+      if (!isPaused) {
+        lastFrameTime = performance.now();
+        gameLoop();
+      }
+    }
+
     function jumpPepito() {
-      if (!isPlaying || isJumping) return;
+      if (!isPlaying || isPaused || isJumping) return;
       isJumping = true;
       pepito.classList.remove('pepito-running');
       let position = 38;
@@ -1091,20 +1230,33 @@
         if (!isPlaying) startGame();
         else jumpPepito();
       }
+      if (e.key.toLowerCase() === 'p' && document.getElementById('window-game').style.display === 'flex') {
+        e.preventDefault();
+        togglePause();
+      }
+    });
+
+    gameBox.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('button')) return;
+      if (!isPlaying) startGame();
+      else jumpPepito();
     });
 
     function gameLoop() {
-      if (!isPlaying) return;
+      if (!isPlaying || isPaused) return;
 
+      const now = performance.now();
+      const delta = Math.min((now - lastFrameTime) / 1000, 0.05);
+      lastFrameTime = now;
       const boxWidth = gameBox.clientWidth;
-      obstaclePos += obstacleSpeed;
+      obstaclePos += obstacleSpeed * delta;
       obstacle.style.right = obstaclePos + 'px';
 
       if (obstaclePos > boxWidth + 40) {
         obstaclePos = -40;
         score += 1;
         scoreText.innerText = score;
-        if (score % 4 === 0) obstacleSpeed += 0.5;
+        obstacleSpeed = Math.min(480, 270 + score * 12);
       }
 
       const pepitoRect = pepito.getBoundingClientRect();
@@ -1133,7 +1285,11 @@
       if (score > highScore) {
         highScore = score;
         highText.innerText = highScore;
+        localStorage.setItem('pepitoHighScore', highScore);
       }
+
+      pauseButton.innerHTML = '<i class="fa-solid fa-pause"></i>';
+      pauseButton.setAttribute('aria-label', 'Mettre le jeu en pause');
 
       startOverlay.innerHTML = `
         <h3 style="color: #ff6b6b; font-size: 19px;">Aïe, bug touché !</h3>
