@@ -90,8 +90,24 @@
       display: none;
       flex-direction: column;
       overflow: hidden;
+      resize: both;
+      min-width: 300px;
+      min-height: 180px;
       z-index: 10;
       animation: popup 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+    }
+
+    .window.minimized {
+      display: none !important;
+    }
+
+    .window.maximized {
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: calc(100vh - 48px) !important;
+      border-radius: 0;
+      resize: none;
     }
 
     @keyframes popup {
@@ -349,8 +365,8 @@
         <i class="fa-solid fa-image" style="color: #0078d4;"></i> Photos — pepito.png
       </div>
       <div class="window-controls">
-        <button class="control-btn">—</button>
-        <button class="control-btn">□</button>
+        <button class="control-btn" onclick="minimizeApp('window-pepito')" aria-label="Réduire" title="Réduire">—</button>
+        <button class="control-btn" onclick="toggleMaximize('window-pepito')" aria-label="Agrandir" title="Agrandir">□</button>
         <button class="control-btn close" onclick="closeApp('window-pepito')">✕</button>
       </div>
     </div>
@@ -369,8 +385,8 @@
         <i class="fa-solid fa-folder-open" style="color: #ffb900;"></i> Explorateur de fichiers — Projets
       </div>
       <div class="window-controls">
-        <button class="control-btn">—</button>
-        <button class="control-btn">□</button>
+        <button class="control-btn" onclick="minimizeApp('window-projects')" aria-label="Réduire" title="Réduire">—</button>
+        <button class="control-btn" onclick="toggleMaximize('window-projects')" aria-label="Agrandir" title="Agrandir">□</button>
         <button class="control-btn close" onclick="closeApp('window-projects')">✕</button>
       </div>
     </div>
@@ -441,13 +457,47 @@
   <script>
     function openApp(id) {
       const win = document.getElementById(id);
+      win.classList.remove('minimized');
       win.style.display = 'flex';
       bringToFront(win);
       closeStartMenu();
     }
 
     function closeApp(id) {
-      document.getElementById(id).style.display = 'none';
+      const win = document.getElementById(id);
+      win.style.display = 'none';
+      win.classList.remove('minimized');
+    }
+
+    function minimizeApp(id) {
+      document.getElementById(id).classList.add('minimized');
+    }
+
+    function toggleMaximize(id) {
+      const win = document.getElementById(id);
+      const maximizeButton = win.querySelector('.control-btn:nth-child(2)');
+
+      if (win.classList.contains('maximized')) {
+        win.classList.remove('maximized');
+        win.style.left = win.dataset.previousLeft;
+        win.style.top = win.dataset.previousTop;
+        win.style.width = win.dataset.previousWidth;
+        win.style.height = win.dataset.previousHeight;
+        maximizeButton.textContent = '□';
+        maximizeButton.title = 'Agrandir';
+        maximizeButton.setAttribute('aria-label', 'Agrandir');
+        return;
+      }
+
+      const bounds = win.getBoundingClientRect();
+      win.dataset.previousLeft = `${bounds.left}px`;
+      win.dataset.previousTop = `${bounds.top}px`;
+      win.dataset.previousWidth = `${bounds.width}px`;
+      win.dataset.previousHeight = `${bounds.height}px`;
+      win.classList.add('maximized');
+      maximizeButton.textContent = '❐';
+      maximizeButton.title = 'Restaurer';
+      maximizeButton.setAttribute('aria-label', 'Restaurer');
     }
 
     let topZ = 10;
@@ -466,6 +516,7 @@
     }
 
     function dragWindow(win, event) {
+      if (event.target.closest('button')) return;
       bringToFront(win);
       let shiftX = event.clientX - win.getBoundingClientRect().left;
       let shiftY = event.clientY - win.getBoundingClientRect().top;
